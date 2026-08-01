@@ -1,0 +1,58 @@
+# Tier-B ID shape patterns for bolascan enumeration probes.
+# Community PRs: add a [[pattern]] block; no Rust changes required.
+
+[[pattern]]
+name = "sequential_int"
+kind = "enumerable"
+match = "value"
+regex = "^[0-9]{1,20}$"
+mutation = "increment"
+
+[[pattern]]
+name = "uuid_v4"
+kind = "opaque"
+match = "value"
+regex = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+mutation = "swap_neighbor"
+
+[[pattern]]
+name = "mongodb_objectid"
+kind = "opaque"
+match = "value"
+regex = "^[0-9a-fA-F]{24}$"
+mutation = "flip_last_nibble"
+
+[[pattern]]
+name = "base64_int"
+kind = "enumerable"
+match = "value"
+regex = "^[A-Za-z0-9+/]{8,}={0,2}$"
+mutation = "base64_decode_increment"
+
+[[pattern]]
+name = "slug"
+kind = "enumerable"
+match = "value"
+regex = "^[a-z0-9][a-z0-9_-]{2,63}$"
+mutation = "slug_neighbor"
+
+[[pattern]]
+name = "jwt_shape"
+kind = "opaque"
+match = "value"
+regex = "^eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$"
+mutation = "jwt_payload_tweak"
+
+[[pattern]]
+name = "hash_hex_32"
+kind = "opaque"
+match = "value"
+regex = "^[0-9a-fA-F]{32}$"
+mutation = "flip_last_nibble"
+
+[[pattern]]
+name = "snowflake"
+kind = "enumerable"
+match = "value"
+regex = "^[0-9]{17,20}$"
+mutation = "increment"
