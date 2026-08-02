@@ -64,3 +64,8 @@ pub use probe::{
 };
 pub use tier_b::{IdPattern, IdPatternRules};
 pub use verify::{compare_cross_role, compare_with_appmap, ContentCompareResult};
+
+// The README's Rust examples are collected as doctests, so the quick-start
+// can never drift from the API (contract rung: README compiles and runs).
+#[doc = include_str!("../README.md")]
+mod readme_doctests {}

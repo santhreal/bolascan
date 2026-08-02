@@ -54,18 +54,38 @@ path = "/api/users/{id}"
 ### Library
 
 ```rust
-use appmap::{AppMap, RoleAuth};
+use appmap::{AppMap, Endpoint, Method, ParameterClassifier, RoleAuth};
 use bolascan::{BolaScan, ScanConfig};
 
-let findings = BolaScan::new().scan_with_replay(
-    &appmap,
-    &roles,
-    &ScanConfig::new("https://target"),
-    |role, probe| {
-        // issue probe.url as role, return (status_code, body_bytes)
-        (200, b"{}".to_vec())
-    },
-)?;
+// Build the appmap: two roles and one ID-bearing endpoint.
+let classifier = ParameterClassifier::embedded().expect("embedded classifier");
+let appmap = AppMap::builder()
+    .with_roles(vec![
+        RoleAuth::new("user_a").with_cookie("session", "aaa"),
+        RoleAuth::new("user_b").with_cookie("session", "bbb"),
+    ])
+    .endpoint(
+        Endpoint::new(Method::Get, "/api/users/{id}")
+            .with_parameter(classifier.classify("id", Some("1"))),
+    )
+    .build()
+    .expect("valid appmap");
+
+let findings = BolaScan::new()
+    .scan_with_replay(
+        &appmap,
+        appmap.roles(),
+        &ScanConfig::new("https://api.example.com"),
+        |role, probe| {
+            // Issue `probe.url` with the role's credentials over your own HTTP
+            // transport, then return (status_code, body_bytes).
+            let _ = role;
+            (200, b"{}".to_vec())
+        },
+    )
+    .expect("scan completes");
+
+println!("{} findings", findings.len());
 ```
 
 ### Tests
@@ -107,7 +127,7 @@ detection logic and finding model.
 
 ## How it fits in Santh
 
-```
+```text
 appmap (runtime)
      |  role matrix + replay
      v

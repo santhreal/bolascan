@@ -204,6 +204,32 @@ pub fn compare_responses(
                     .any(|w| w.eq_ignore_ascii_case(needle))
             };
 
+            // An identical AUTHENTICATION BOUNCE is a failed verification,
+            // never a verified IDOR: many frameworks answer an unauthorized
+            // request with 200 + the login page instead of a 302/401, and a
+            // login form contains "password"/"name"/"account", so it hits the
+            // PII branch below and reports "confirmed IDOR" when all that was
+            // proven is that User B was bounced to login. The discriminator
+            // is the HTML password-input markup (`type="password"` or
+            // `type=password`), which appears in login FORMS but not in JSON
+            // API data that legitimately carries a password field.
+            let looks_like_login_form = (contains_ignore_case(b"type=\"password\"")
+                || contains_ignore_case(b"type='password'")
+                || contains_ignore_case(b"type=password"))
+                && (contains_ignore_case(b"login")
+                    || contains_ignore_case(b"log in")
+                    || contains_ignore_case(b"signin")
+                    || contains_ignore_case(b"sign in")
+                    || contains_ignore_case(b"sign-in"));
+            if looks_like_login_form {
+                return (
+                    false,
+                    0.0,
+                    "User B received the same login page as User A (authentication bounce with 200) - not IDOR"
+                        .to_string(),
+                );
+            }
+
             let has_pii = contains_ignore_case(b"email")
                 || contains_ignore_case(b"phone")
                 || contains_ignore_case(b"address")

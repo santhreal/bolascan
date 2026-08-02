@@ -333,3 +333,58 @@ fn id_param_name_case_insensitive() {
     assert!(is_id_param_name("OrderId"));
     assert!(is_id_param_name("UUID"));
 }
+
+// --- honest result semantics: a failed verification must not report verified
+
+/// ADVERSARIAL honest-semantics: a server that answers an unauthorized
+/// cross-role request with 200 + the login page (a common framework behavior
+/// instead of 302/401) produced an IDENTICAL body containing "password",
+/// "name", and "account", which the PII branch reported as "confirmed IDOR"
+/// at 0.9. But the verification FAILED (User B was bounced to login), so it
+/// must never report as verified.
+#[test]
+fn identical_login_bounce_page_is_not_idor() {
+    let login_page = br#"<!DOCTYPE html><html><body>
+        <form action="/login" method="post">
+        <input name="username" type="text">
+        <input name="password" type="password">
+        <button>Sign in to your account</button>
+        </form></body></html>"#;
+    let (idor, confidence, description) =
+        compare_responses(200, login_page, 200, login_page);
+    assert!(
+        !idor,
+        "an authentication bounce must not report as verified IDOR: {description}"
+    );
+    assert_eq!(confidence, 0.0, "got {confidence}");
+}
+
+/// Positive twin for the login-bounce guard: an identical JSON document that
+/// carries a password field as DATA (no HTML form markup) is still a
+/// confirmed IDOR. The guard discriminates on `type="password"` form markup,
+/// not on the word "password" alone.
+#[test]
+fn identical_json_with_password_field_is_still_idor() {
+    let body = br#"{"id": 5, "username": "alice", "password": "hash:9f86d08",
+        "email": "alice@example.com", "account": "premium", "balance": 100}"#;
+    let (idor, confidence, _) = compare_responses(200, body, 200, body);
+    assert!(idor, "real PII data must still confirm IDOR");
+    assert!(
+        confidence >= 0.9,
+        "confirmed-IDOR confidence must be preserved, got {confidence}"
+    );
+}
+
+/// Boundary: an HTML page that merely mentions the word "password" in prose
+/// (no password-input markup) keeps the old behavior, proving the guard only
+/// fires on actual login forms.
+#[test]
+fn identical_page_mentioning_password_without_form_is_still_flagged() {
+    let body = b"<html><body><h1>Account recovery policy</h1><p>Your password must be rotated every 90 days. Contact your account manager by email for assistance with recovery.</p></body></html>"
+        as &[u8];
+    let (idor, _, description) = compare_responses(200, body, 200, body);
+    assert!(
+        idor,
+        "a page merely mentioning 'password' (no login form) must not hit the bounce guard: {description}"
+    );
+}

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1 - 2026-08-02
+
+### Fixed
+- A server answering an unauthorized cross-role request with HTTP 200 plus the login page (an auth bounce instead of 302/401) no longer counts as a confirmed IDOR. The login-form discriminator (`type=password` markup plus a login or sign-in marker) now returns unverified with zero confidence instead of "confirmed IDOR with PII" at 0.9.
+- README library quick-start rewritten as a complete runnable example and wired as a doctest.
+
 ## 0.2.0 - 2026-07-31
 
 ### Changed (breaking)

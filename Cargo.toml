@@ -1,6 +1,6 @@
 [package]
 name = "bolascan"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 rust-version = "1.85"
 license = "MIT OR Apache-2.0"
@@ -14,14 +14,14 @@ categories = ["web-programming", "authentication"]
 publish = true
 
 [dependencies]
-appmap = { version = "0.1.2" }
+appmap = { package = "appsurface", version = "0.1.2" }
 secfinding = { version = "0.4" }
 respdiff = { version = "0.5" }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { version = "1.0.149" }
 thiserror = { version = "2.0.18" }
 toml = "=0.8.23"
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1", features = ["rt", "macros"] }
 clap = { version = "4.6.0", features = ["derive"] }
 
 [features]
