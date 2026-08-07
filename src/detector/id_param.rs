@@ -56,7 +56,8 @@ pub fn extract_resource_ids(url: &str) -> Vec<(IdParam, String)> {
         }
     }
 
-    if let Some(query) = url.split('?').nth(1) {
+    if let Some(query_raw) = url.split('?').nth(1) {
+        let query = query_raw.split('#').next().unwrap_or(query_raw);
         for param in query.split('&') {
             if let Some((name, value)) = param.split_once('=') {
                 // Percent-decode before the ID/name checks so a percent-encoded
@@ -459,7 +460,11 @@ pub fn mutate_id_in_url(url: &str, id_param: &IdParam, new_id: &str) -> String {
             format!("{mutated_path}{suffix}")
         }
         IdParam::QueryParam { name } => {
-            if let Some((base, query)) = url.split_once('?') {
+            if let Some((base, query_and_frag)) = url.split_once('?') {
+                let (query, frag) = match query_and_frag.split_once('#') {
+                    Some((q, f)) => (q, format!("#{f}")),
+                    None => (query_and_frag, String::new()),
+                };
                 let new_query: String = query
                     .split('&')
                     .map(|param| {
@@ -475,7 +480,7 @@ pub fn mutate_id_in_url(url: &str, id_param: &IdParam, new_id: &str) -> String {
                     })
                     .collect::<Vec<_>>()
                     .join("&");
-                format!("{base}?{new_query}")
+                format!("{base}?{new_query}{frag}")
             } else {
                 url.to_string()
             }

@@ -41,6 +41,9 @@ impl IdPatternRules {
 
     pub fn from_toml(toml_src: &str) -> Result<Self, String> {
         let file: IdPatternsFile = toml::from_str(toml_src).map_err(|e| e.to_string())?;
+        if file.pattern.is_empty() {
+            return Err("tier-b pattern ruleset cannot be empty".to_string());
+        }
         Ok(Self {
             patterns: file.pattern,
         })
@@ -69,7 +72,12 @@ impl IdPatternRules {
             "base64_decode_increment" => mutate_base64_int(token),
             "slug_neighbor" => mutate_slug_neighbor(token),
             "jwt_payload_tweak" => mutate_jwt_payload(token),
-            _ => mutate_increment(token),
+            unknown => {
+                eprintln!(
+                    "bolascan: warning: unknown tier_b mutation strategy '{unknown}', falling back to 'increment'"
+                );
+                mutate_increment(token)
+            }
         }
     }
 }

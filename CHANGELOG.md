@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.2] - 2026-08-07
+
+### Fixed
+- Updated Cargo.toml authors to `Santh <64453045+santhreal@users.noreply.github.com>`.
+- `privacy_fields_in_body` in content comparison now recursively scans nested JSON objects and JSON arrays of objects for privacy keys.
+- `IdPatternRules::from_toml` now fails closed returning an `Err` if the parsed pattern ruleset is empty.
+- `mutate_id_in_url` now preserves URL fragments (`#frag`) when mutating query parameters, and query extraction strips trailing fragments before checking parameter values.
+- `IdPatternRules::mutate_token` explicitly warns on unknown mutation strategies instead of silently falling back.
+
 ## 0.2.1 - 2026-08-02
 
 ### Fixed

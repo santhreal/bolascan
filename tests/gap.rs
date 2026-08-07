@@ -278,6 +278,11 @@ fn tier_b_from_toml_round_trips_embedded() {
 fn tier_b_from_toml_invalid_returns_error() {
     let result = IdPatternRules::from_toml("this is not valid toml [[[");
     assert!(result.is_err());
+    let empty_result = IdPatternRules::from_toml("pattern = []");
+    assert!(
+        empty_result.is_err(),
+        "empty pattern array must return error"
+    );
 }
 
 #[test]

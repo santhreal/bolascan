@@ -72,19 +72,38 @@ pub fn compare_with_appmap(
 }
 
 fn privacy_fields_in_body(body: &[u8]) -> Vec<String> {
-    let Ok(serde_json::Value::Object(map)) = serde_json::from_slice(body) else {
+    let Ok(val) = serde_json::from_slice::<serde_json::Value>(body) else {
         return Vec::new();
     };
-    map.keys()
-        .filter(|k| {
-            let lower = k.to_ascii_lowercase();
-            lower.contains("email")
-                || lower.contains("ssn")
-                || lower.contains("password")
-                || lower.contains("secret")
-                || lower.contains("token")
-                || lower.contains("api_key")
-        })
-        .cloned()
-        .collect()
+    let mut fields = Vec::new();
+    collect_privacy_keys_recursive(&val, &mut fields);
+    fields.sort();
+    fields.dedup();
+    fields
+}
+
+fn collect_privacy_keys_recursive(value: &serde_json::Value, out: &mut Vec<String>) {
+    match value {
+        serde_json::Value::Object(map) => {
+            for (k, v) in map {
+                let lower = k.to_ascii_lowercase();
+                if lower.contains("email")
+                    || lower.contains("ssn")
+                    || lower.contains("password")
+                    || lower.contains("secret")
+                    || lower.contains("token")
+                    || lower.contains("api_key")
+                {
+                    out.push(k.clone());
+                }
+                collect_privacy_keys_recursive(v, out);
+            }
+        }
+        serde_json::Value::Array(arr) => {
+            for v in arr {
+                collect_privacy_keys_recursive(v, out);
+            }
+        }
+        _ => {}
+    }
 }
