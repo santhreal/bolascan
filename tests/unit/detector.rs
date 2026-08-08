@@ -192,3 +192,10 @@ fn both_errors_not_idor() {
     let (detected, _, _) = compare_responses(500, b"Error", 500, b"Error");
     assert!(!detected);
 }
+#[test]
+fn extract_resource_ids_strips_path_fragment() {
+    let ids = extract_resource_ids("http://example.com/api/users/12345#profile");
+    assert_eq!(ids.len(), 1);
+    assert_eq!(ids[0].0, IdParam::PathSegment { segment_index: 5 });
+    assert_eq!(ids[0].1, "12345");
+}

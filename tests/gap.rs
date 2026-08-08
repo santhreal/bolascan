@@ -283,6 +283,19 @@ fn tier_b_from_toml_invalid_returns_error() {
         empty_result.is_err(),
         "empty pattern array must return error"
     );
+    let unknown_strat = IdPatternRules::from_toml(
+        r#"[[pattern]]
+name = "test"
+kind = "test"
+match = "test"
+regex = "^[0-9]{1,20}$"
+mutation = "invalid_strategy_foo"
+"#,
+    );
+    assert!(
+        unknown_strat.is_err(),
+        "unknown mutation strategy must return error"
+    );
 }
 
 #[test]
@@ -333,6 +346,18 @@ fn tier_b_jwt_mutation_replaces_payload() {
         2,
         "mutated JWT must still have 2 dots"
     );
+}
+
+#[test]
+fn mutate_json_id_u64_large_number() {
+    let body = r#"{"user_id": 18446744073709551615}"#;
+    let ids = extract_json_ids(body);
+    assert_eq!(ids.len(), 1);
+    assert_eq!(ids[0].0, "user_id");
+    assert_eq!(ids[0].1, "18446744073709551615");
+
+    let mutated = mutate_json_id(body, "user_id", "18446744073709551614").unwrap();
+    assert!(mutated.contains("18446744073709551614"));
 }
 
 // --- is_id_param_name

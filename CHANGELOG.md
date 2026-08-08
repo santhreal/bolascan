@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.3] - 2026-08-08
+
+### Fixed
+- `IdPatternRules::from_toml` now fails closed returning an `Err` on unknown mutation strategies in TOML pattern definitions instead of silently defaulting to `increment`.
+- `template_to_url` now replaces unlisted template placeholders cleanly without corrupting the path string.
+- `extract_ids_recursive` and `mutate_json_id` now support large `u64` numeric values (e.g. 64-bit snowflake IDs) without truncation or missing numeric fields.
+- `bolascan-cli` fails closed with a clear error on invalid HTTP methods in input roles files instead of silently defaulting to `GET`.
+- `is_id_param_name` simplified string suffix matching logic for cleanliness and correctness.
+
 ## [0.2.2] - 2026-08-07
 
 ### Fixed
@@ -8,7 +17,6 @@
 - `IdPatternRules::from_toml` now fails closed returning an `Err` if the parsed pattern ruleset is empty.
 - `mutate_id_in_url` now preserves URL fragments (`#frag`) when mutating query parameters, and query extraction strips trailing fragments before checking parameter values.
 - `IdPatternRules::mutate_token` explicitly warns on unknown mutation strategies instead of silently falling back.
-
 ## 0.2.1 - 2026-08-02
 
 ### Fixed

@@ -93,7 +93,12 @@ async fn run_scan(
         );
     } else {
         for ep in endpoint_specs {
-            let method = Method::parse(&ep.method).unwrap_or(Method::Get);
+            let method = Method::parse(&ep.method).ok_or_else(|| {
+                format!(
+                    "invalid HTTP method '{}' for endpoint '{}'",
+                    ep.method, ep.path
+                )
+            })?;
             let mut endpoint = Endpoint::new(method, ep.path);
             for seg in endpoint.template_segment_names() {
                 endpoint = endpoint.with_parameter(classifier.classify(&seg, Some("1")));

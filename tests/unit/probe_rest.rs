@@ -24,3 +24,20 @@ async fn matrix_pairs_exclude_same_role() {
         assert_ne!(owner.role, prober.role);
     }
 }
+
+#[test]
+fn template_to_url_unlisted_placeholder_replaced_with_sample() {
+    use appmap::{AppMap, Endpoint, Method, RoleAuth};
+    use bolascan::plan_rest_probes;
+
+    let mut builder = AppMap::builder().with_roles(vec![RoleAuth::new("admin")]);
+    // Endpoint has path template with {org_id} and {user_id}, but no explicit parameters registered.
+    builder = builder.endpoint(Endpoint::new(Method::Get, "/api/orgs/{org_id}/users/{user_id}"));
+    let appmap = builder.build().unwrap();
+    let roles = vec![RoleAuth::new("admin")];
+
+    let probes = plan_rest_probes(&appmap, &roles, "https://api.example.com").unwrap();
+    assert!(!probes.is_empty());
+    // Unlisted placeholders must be replaced cleanly with "42", which is then mutated to "43" by Tier-B
+    assert!(probes[0].url.contains("/api/orgs/43/users/42"));
+}

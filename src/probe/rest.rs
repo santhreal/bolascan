@@ -112,8 +112,13 @@ fn template_to_url(base: &str, endpoint: &Endpoint) -> String {
         let sample = param.sample_value.as_deref().unwrap_or("42");
         path = path.replace(&placeholder, sample);
     }
-    if path.contains('{') {
-        path = path.replace('{', "").replace('}', "42");
+    while let Some(start) = path.find('{') {
+        if let Some(end) = path[start..].find('}') {
+            let end_idx = start + end;
+            path.replace_range(start..=end_idx, "42");
+        } else {
+            break;
+        }
     }
     format!("{base}{path}")
 }

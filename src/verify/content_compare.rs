@@ -72,11 +72,20 @@ pub fn compare_with_appmap(
 }
 
 fn privacy_fields_in_body(body: &[u8]) -> Vec<String> {
-    let Ok(val) = serde_json::from_slice::<serde_json::Value>(body) else {
-        return Vec::new();
-    };
     let mut fields = Vec::new();
-    collect_privacy_keys_recursive(&val, &mut fields);
+    if let Ok(val) = serde_json::from_slice::<serde_json::Value>(body) {
+        collect_privacy_keys_recursive(&val, &mut fields);
+    } else if let Ok(text) = std::str::from_utf8(body) {
+        let lower = text.to_ascii_lowercase();
+        for key in &[
+            "email", "ssn", "password", "secret", "token", "api_key", "phone", "address",
+            "balance", "private",
+        ] {
+            if lower.contains(key) {
+                fields.push((*key).to_string());
+            }
+        }
+    }
     fields.sort();
     fields.dedup();
     fields

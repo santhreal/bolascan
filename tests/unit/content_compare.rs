@@ -30,3 +30,10 @@ fn privacy_fields_extracted_from_json_array() {
     let result = compare_cross_role(200, body, 200, body);
     assert!(result.leaked_privacy_fields.contains(&"ssn".to_string()));
 }
+#[test]
+fn privacy_fields_extracted_from_non_json_text() {
+    let body = b"email=user%40example.com&secret=my_secret_token_value_extra_padding";
+    let result = compare_cross_role(200, body, 200, body);
+    assert!(result.leaked_privacy_fields.contains(&"email".to_string()));
+    assert!(result.leaked_privacy_fields.contains(&"secret".to_string()));
+}

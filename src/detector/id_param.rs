@@ -44,7 +44,8 @@ pub struct IdorTarget {
 pub fn extract_resource_ids(url: &str) -> Vec<(IdParam, String)> {
     let mut ids = Vec::new();
 
-    if let Some(path) = url.split('?').next() {
+    if let Some(path_raw) = url.split('?').next() {
+        let path = path_raw.split('#').next().unwrap_or(path_raw);
         let segments: Vec<&str> = path.split('/').collect();
         for (i, segment) in segments.iter().enumerate() {
             if is_resource_id(segment) {
@@ -330,6 +331,8 @@ fn extract_ids_recursive(value: &serde_json::Value, prefix: &str, ids: &mut Vec<
                         if is_resource_id(s) {
                             ids.push((path.clone(), s.to_string()));
                         }
+                    } else if let Some(n) = val.as_u64() {
+                        ids.push((path.clone(), n.to_string()));
                     } else if let Some(n) = val.as_i64() {
                         ids.push((path.clone(), n.to_string()));
                     }
@@ -423,7 +426,13 @@ pub fn mutate_json_id(body: &str, field_path: &str, new_id: &str) -> Option<Stri
         *target = serde_json::Value::String(new_id.to_string());
     } else if target.is_number() {
         // Preserve the number type; only mutate if new_id is a valid integer.
-        *target = serde_json::json!(new_id.parse::<i64>().ok()?);
+        if let Ok(n) = new_id.parse::<u64>() {
+            *target = serde_json::json!(n);
+        } else if let Ok(n) = new_id.parse::<i64>() {
+            *target = serde_json::json!(n);
+        } else {
+            return None;
+        }
     } else {
         // Path resolved to a non-mutatable leaf (bool/null/object/array).
         return None;

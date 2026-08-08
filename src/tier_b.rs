@@ -44,6 +44,20 @@ impl IdPatternRules {
         if file.pattern.is_empty() {
             return Err("tier-b pattern ruleset cannot be empty".to_string());
         }
+        for p in &file.pattern {
+            if !is_valid_mutation_strategy(&p.mutation) {
+                return Err(format!(
+                    "unknown tier-b mutation strategy '{}' in pattern '{}'",
+                    p.mutation, p.name
+                ));
+            }
+            if !is_supported_regex(&p.regex) {
+                eprintln!(
+                    "bolascan: warning: tier_b pattern '{}' uses unsupported regex '{}'",
+                    p.name, p.regex
+                );
+            }
+        }
         Ok(Self {
             patterns: file.pattern,
         })
@@ -72,14 +86,34 @@ impl IdPatternRules {
             "base64_decode_increment" => mutate_base64_int(token),
             "slug_neighbor" => mutate_slug_neighbor(token),
             "jwt_payload_tweak" => mutate_jwt_payload(token),
-            unknown => {
-                eprintln!(
-                    "bolascan: warning: unknown tier_b mutation strategy '{unknown}', falling back to 'increment'"
-                );
-                mutate_increment(token)
-            }
+            _ => mutate_increment(token),
         }
     }
+}
+
+fn is_valid_mutation_strategy(s: &str) -> bool {
+    matches!(
+        s,
+        "increment"
+            | "swap_neighbor"
+            | "flip_last_nibble"
+            | "base64_decode_increment"
+            | "slug_neighbor"
+            | "jwt_payload_tweak"
+    )
+}
+
+fn is_supported_regex(regex: &str) -> bool {
+    matches!(
+        regex,
+        r"^[0-9]{1,20}$"
+            | r"^[0-9]{17,20}$"
+            | r"^[0-9a-fA-F]{24}$"
+            | r"^[0-9a-fA-F]{32}$"
+            | r"^[a-z0-9][a-z0-9_-]{2,63}$"
+            | r"^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$"
+            | r"^[A-Za-z0-9+/]{8,}={0,2}$"
+    ) || regex.contains("uuid") || regex.contains('-')
 }
 
 fn regex_matches(regex: &str, value: &str) -> bool {
@@ -114,7 +148,12 @@ fn regex_matches(regex: &str, value: &str) -> bool {
                     .chars()
                     .all(|c| c.is_ascii_hexdigit())
         }
-        _ => false,
+        _ => {
+            if !is_supported_regex(regex) {
+                eprintln!("bolascan: warning: unsupported tier_b regex pattern '{regex}'");
+            }
+            false
+        }
     }
 }
 
