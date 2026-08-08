@@ -14,24 +14,24 @@ categories = ["web-programming", "authentication"]
 publish = true
 
 [dependencies]
-appmap = { version = "0.1.2" }
-secfinding = { version = "0.4" }
-respdiff = { version = "0.5" }
-serde = { version = "1.0.228", features = ["derive"] }
-serde_json = { version = "1.0.149" }
-thiserror = { version = "2.0.18" }
+appmap = { package = "appsurface", path = "../../runtime/appsurface", version = "0.1.2" }
+secfinding = { path = "../../scanner/secfinding", version = "0.4" }
+respdiff = { path = "../../scanner/respdiff", version = "0.5" }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
 toml = "=0.8.23"
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
-clap = { version = "4.6.0", features = ["derive"] }
+tokio = { workspace = true, features = ["rt", "macros"] }
+clap = { workspace = true, features = ["derive"] }
 
 [features]
 default = ["tier-b-toml"]
 tier-b-toml = []
 
 [dev-dependencies]
-proptest = { version = "1.9.0" }
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
-serde_json = { version = "1.0.149" }
+proptest = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+serde_json = { workspace = true }
 
 [lints.rust]
 unsafe_code = "forbid"
